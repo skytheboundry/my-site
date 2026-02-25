@@ -1,10 +1,22 @@
+import Image from "next/image";
+
 export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white mt-20">
       <div className="max-w-7xl mx-auto px-6 py-10 grid md:grid-cols-3 gap-8">
-        <div>
-          <h2 className="text-xl font-bold mb-3">Vanexa</h2>
-          <p>Professional solutions for modern businesses.</p>
+         <div>
+          <div className="flex items-center space-x-3 mb-4">
+            <Image
+              src="/logo-vanexa.png"
+              alt="Vanexa Logo"
+              width={240}
+              height={40}
+            />
+          </div>
+          <p className="text-gray-400">
+            Delivering innovative and reliable technology solutions 
+            for modern businesses.
+          </p>
         </div>
 
         <div>
