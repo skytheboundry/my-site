@@ -1,141 +1,223 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import Link from "next/link";
+import Image from "next/image";
 
-type NewsItem = {
+interface NewsItem {
   id: string;
   title: string;
   description: string;
-  date: string;
+  imageUrl?: string;
   author: string;
-};
-export default function Home() {
+  cat: string;
+  createdAt?: any;
+  views?: number;
+  likes?: number;
+}
 
+export default function NewsPage() {
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [filtered, setFiltered] = useState<NewsItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchNews() {
-      const querySnapshot = await getDocs(collection(db, "news"));
+    const fetchNews = async () => {
+      const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
 
-      const newsData: NewsItem[] = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as NewsItem[];
 
-        return {
-          id: doc.id,
-          title: data.title ?? "",
-          description: data.description ?? "",
-          date: data.date
-            ? new Date(data.date.seconds * 1000).toLocaleDateString()
-            : "",
-          author: data.author ?? "",
-        };
-      });
-
-      setNews(newsData);
-    }
+      setNews(data);
+      setFiltered(data);
+      setLoading(false);
+    };
 
     fetchNews();
   }, []);
 
+  useEffect(() => {
+    let temp = news;
+
+    if (category !== "All") {
+      temp = temp.filter(
+        (item) => item.cat?.trim() === category
+      );
+    }
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      temp = temp.filter(
+        (item) =>
+          item.title.toLowerCase().includes(searchLower) ||
+          item.description.toLowerCase().includes(searchLower)
+      );
+    }
+
+    setFiltered(temp);
+  }, [search, category, news]);
+
+  const categories = [
+    "All",
+    ...Array.from(
+      new Set(
+        news
+          .map((n) => n.cat?.trim())
+          .filter(Boolean)
+      )
+    ),
+  ];
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp || !timestamp.toDate) return "";
+    return timestamp.toDate().toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
-    <>
-      {/* HERO SECTION */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-28 text-center px-6">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
-          Empowering Businesses with Innovation
-        </h1>
-        <p className="max-w-2xl mx-auto text-lg md:text-xl mb-8">
-          Vanexa delivers cutting-edge technology solutions that drive
-          growth, efficiency, and success.
-        </p>
-        <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-gray-100 transition">
-          Get Started
-        </button>
-      </section>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-16 px-6">
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-4 gap-10">
 
-      {/* ABOUT SECTION */}
-      <section className="py-24 px-6 max-w-6xl mx-auto text-center">
-        <h2 className="text-3xl md:text-4xl font-bold mb-6">
-          About Vanexa
-        </h2>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          We are committed to delivering high-quality services and
-          cutting-edge technology solutions tailored to modern businesses.
-        </p>
-      </section>
+        {/* LEFT CONTENT */}
+        <div className="lg:col-span-3">
 
-      {/* SERVICES */}
-      <section className="py-28 px-6 bg-gray-50">
-        <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
-          Our Services
-        </h2>
+          {/* SEARCH */}
+          <input
+            type="text"
+            placeholder="Search news..."
+            className="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-black dark:text-white mb-6 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
-        <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto">
-          <div className="bg-white p-10 rounded-2xl shadow-lg hover:shadow-2xl transition duration-300">
-            <h3 className="text-2xl font-semibold mb-4 text-blue-600">
-              Consulting
-            </h3>
-            <p className="text-gray-600 leading-relaxed">
-              Strategic business and technology consulting tailored to your goals.
-            </p>
-          </div>
-
-          <div className="bg-white p-10 rounded-2xl shadow-lg hover:shadow-2xl transition duration-300">
-            <h3 className="text-2xl font-semibold mb-4 text-blue-600">
-              Development
-            </h3>
-            <p className="text-gray-600 leading-relaxed">
-              Custom web and software development solutions built for growth.
-            </p>
-          </div>
-
-          <div className="bg-white p-10 rounded-2xl shadow-lg hover:shadow-2xl transition duration-300">
-            <h3 className="text-2xl font-semibold mb-4 text-blue-600">
-              Support
-            </h3>
-            <p className="text-gray-600 leading-relaxed">
-              Reliable 24/7 support and maintenance services.
-            </p>
-          </div>
-        </div>
-      </section>
-
-
-      {/* NEWS PREVIEW */}
-      <section className="py-24 px-6 bg-gray-100">
-        <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
-          Latest News
-        </h2>
-
-        {news.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No news available.
-          </p>
-        ) : (
-          <div className="flex flex-wrap justify-center gap-8 max-w-6xl mx-auto">
-            {news.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white p-6 rounded-xl shadow-md w-full md:w-[350px] hover:shadow-xl transition"
+          {/* CATEGORY TAGS */}
+          <div className="flex gap-3 flex-wrap mb-8">
+            {categories.map((cat, index) => (
+              <button
+                key={`cat-btn-${index}-${cat}`}
+                onClick={() => setCategory(cat)}
+                className={`px-4 py-1 rounded-full text-sm transition ${
+                  category === cat
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-300"
+                }`}
               >
-                <h3 className="text-xl font-semibold mb-2 text-blue-600">
-                  {item.title}
-                </h3>
-
-                <p className="text-gray-600 mb-4">
-                  {item.description}
-                </p>
-
-                <p className="text-sm text-gray-400">
-                  {item.date} | {item.author}
-                </p>
-              </div>
+                {cat}
+              </button>
             ))}
           </div>
-        )}
-      </section>
-    </>
+
+          {/* NEWS LIST */}
+          {loading ? (
+            <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="animate-pulse h-40 bg-gray-300 dark:bg-gray-800 rounded-2xl"
+                />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400">
+              No news found.
+            </p>
+          ) : (
+            <div className="space-y-10">
+              {filtered.map((item) => (
+                <Link key={item.id} href={`/news/${item.id}`}>
+                  <div className="group bg-white dark:bg-gray-900 rounded-2xl m-5 shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col md:flex-row cursor-pointer">
+
+                    {item.imageUrl && (
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        width={400}
+                        height={250}
+                        className="w-full md:w-72 h-56 object-cover"
+                      />
+                    )}
+
+                    <div className="p-6 flex flex-col justify-between">
+                      <div>
+                        <h2 className="text-xl font-bold mb-2 group-hover:text-blue-600 transition">
+                          {item.title}
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
+                          {item.description}
+                        </p>
+                      </div>
+
+                      <div className="text-xs text-gray-500 dark:text-gray-400 flex gap-4 flex-wrap">
+                        <span>By {item.author}</span>
+                        <span>{formatDate(item.createdAt)}</span>
+                        <span>👁 {item.views ?? 0}</span>
+                        <span>❤️ {item.likes ?? 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT SIDEBAR */}
+        <div className="hidden lg:block space-y-8">
+
+          {/* Categories */}
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md">
+            <h3 className="font-bold mb-4 dark:text-white">
+              Categories
+            </h3>
+            <ul className="space-y-2 text-sm">
+              {categories.map((cat, index) => (
+                <li
+                  key={`cat-side-${index}-${cat}`}
+                  className="cursor-pointer hover:text-blue-600 dark:text-gray-300"
+                  onClick={() => setCategory(cat)}
+                >
+                  {cat}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Latest News */}
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md">
+            <h3 className="font-bold mb-4 dark:text-white">
+              Latest News
+            </h3>
+            <ul className="space-y-3 text-sm">
+              {news.slice(0, 5).map((item) => (
+                <li key={`latest-${item.id}`}>
+                  <Link
+                    href={`/news/${item.id}`}
+                    className="hover:text-blue-600 dark:text-gray-300"
+                  >
+                    {item.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
   );
 }

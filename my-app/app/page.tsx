@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-
+import Link from "next/link";
+import Banner from "@/components/Banner";
 type NewsItem = {
   id: string;
   title: string;
@@ -41,8 +42,15 @@ export default function Home() {
 
   return (
     <>
+    <Banner
+  title="Empowering Businesses with Innovation"
+  subtitle="Latest updates, insights, and technology innovations from Vanexa."
+  buttonText="GET-STARTED"
+  buttonLink="/"
+  backgroundImage="/banner-bg.png" // optional
+/>
       {/* HERO SECTION */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-28 text-center px-6">
+      {/* <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-28 text-center px-6">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">
           Empowering Businesses with Innovation
         </h1>
@@ -53,7 +61,7 @@ export default function Home() {
         <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-gray-100 transition">
           Get Started
         </button>
-      </section>
+      </section> */}
 
       {/* ABOUT SECTION */}
       <section className="py-24 px-6 max-w-6xl mx-auto text-center">
@@ -116,8 +124,9 @@ export default function Home() {
         ) : (
           <div className="flex flex-wrap justify-center gap-8 max-w-6xl mx-auto">
             {news.map((item) => (
+              <Link href={`/news/${item.id}`} key={item.id}>
               <div
-                key={item.id}
+                
                 className="bg-white p-6 rounded-xl shadow-md w-full md:w-[350px] hover:shadow-xl transition"
               >
                 <h3 className="text-xl font-semibold mb-2 text-blue-600">
@@ -132,6 +141,7 @@ export default function Home() {
                   {item.date} | {item.author}
                 </p>
               </div>
+              </Link>
             ))}
           </div>
         )}
