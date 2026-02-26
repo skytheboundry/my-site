@@ -47,7 +47,7 @@ export default function Home() {
   subtitle="Latest updates, insights, and technology innovations from Vanexa."
   buttonText="GET-STARTED"
   buttonLink="/"
-  backgroundImage="/banner-bg.png" // optional
+  backgroundImage="/Banner-bg.png" // optional
 />
       {/* HERO SECTION */}
       {/* <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-28 text-center px-6">
